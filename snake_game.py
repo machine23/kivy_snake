@@ -1,8 +1,9 @@
-from kivy.app import App
-from kivy.uix.widget import Widget
-from kivy.clock import Clock
-from kivy.graphics import Color, Ellipse
 from kivy import properties as props
+from kivy.app import App
+from kivy.clock import Clock
+from kivy.core.window import Window
+from kivy.graphics import Color, Ellipse
+from kivy.uix.widget import Widget
 
 SPEED = 0.1
 SIZE = 30
@@ -21,6 +22,10 @@ class Snake(Widget):
         super().__init__()
         self.canvas = canvas
         self._grow([300, 300])
+
+    @property
+    def pos(self):
+        return self.body[0].pos
 
     def _grow(self, pos):
         with self.canvas:
@@ -56,8 +61,27 @@ class SnakeGame(Widget):
         self.canvas.clear()
         self.snake = Snake(self.canvas)
 
+    def on_touch_down(self, touch):
+        window_size = Window.size
+        direction = self.direction
+        if window_size[0] - touch.pos[0] < window_size[0] / 4:
+            direction = "right"
+        elif touch.pos[0] < (window_size[0] / 4):
+            direction = "left"
+        elif window_size[1] - touch.pos[1] < window_size[1] / 4:
+            direction = "up"
+        elif touch.pos[1] < (window_size[1] / 4):
+            direction = "down"
+
+        if self.opposite_dirs[direction] != self.direction:
+            self.direction = direction
+
+        return super(SnakeGame, self).on_touch_down(touch)
+
     def update(self, dt):
-        snake_pos = [sum(x) for x in zip(self.snake.body[0].pos, self.movs[self.direction])]
+        snake_pos = [
+            sum(x) for x in zip(self.snake.pos, self.movs[self.direction])
+        ]
         self.snake.move_to(snake_pos)
 
 
