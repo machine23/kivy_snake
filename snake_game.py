@@ -4,6 +4,7 @@ from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.graphics import Color, Ellipse
 from kivy.uix.widget import Widget
+from kivy.uix.label import Label
 
 SPEED = 0.1
 SIZE = 30
@@ -21,7 +22,8 @@ class Snake(Widget):
     def __init__(self, canvas):
         super().__init__()
         self.canvas = canvas
-        self._grow([300, 300])
+        for _ in range(60):
+            self._grow([300, 300])
 
     @property
     def pos(self):
@@ -32,6 +34,13 @@ class Snake(Widget):
             Color(0, 0, 1)
             head = Ellipse(pos=pos, size=self.size)
             self.body.append(head)
+
+    def check_self_collision(self, next_head_pos):
+        """ Проверка на столкновение головы змеи с телом """
+        for body_segment in self.body[1:]:
+            if list(body_segment.pos) == next_head_pos:
+                return True
+        return False
 
     def move_to(self, next_pos, grow=False):
         for i, segment in enumerate(self.body):
@@ -91,12 +100,25 @@ class SnakeGame(Widget):
         elif position[1] + SIZE > window_size[1]:
             position[1] = 0
         
+    def final_screen(self):
+        Clock.unschedule(self.update)
+        self.canvas.clear()
+        l = Label(
+            font_size=20,
+            pos=(300, 300),
+            text="Game Over!")
+
+        self.add_widget(l)
 
     def update(self, dt):
         snake_pos = [
             sum(x) for x in zip(self.snake.pos, self.movs[self.direction])
         ]
         self.check_edges(snake_pos)
+        stop_game = self.snake.check_self_collision(snake_pos)
+        if stop_game:
+            self.final_screen()
+
         self.snake.move_to(snake_pos)
 
 
