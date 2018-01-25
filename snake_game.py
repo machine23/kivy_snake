@@ -78,10 +78,25 @@ class SnakeGame(Widget):
 
         return super(SnakeGame, self).on_touch_down(touch)
 
+    @staticmethod
+    def check_edges(position):
+        window_size = Window.size
+        if position[0] < 0:
+            position[0] = window_size[0]
+        elif position[0] + SIZE > window_size[0]:
+            position[0] = 0
+
+        if position[1] < 0:
+            position[1] = window_size[1]
+        elif position[1] + SIZE > window_size[1]:
+            position[1] = 0
+        
+
     def update(self, dt):
         snake_pos = [
             sum(x) for x in zip(self.snake.pos, self.movs[self.direction])
         ]
+        self.check_edges(snake_pos)
         self.snake.move_to(snake_pos)
 
 
