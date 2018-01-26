@@ -79,12 +79,6 @@ class Apple(Widget):
 
 
 class SnakeGame(Widget):
-    opposite_dirs = {
-        RIGHT: LEFT,
-        LEFT: RIGHT,
-        UP: DOWN,
-        DOWN: UP,
-    }
     movs = {
         RIGHT: [SIZE, 0],
         LEFT: [-SIZE, 0],
@@ -100,19 +94,19 @@ class SnakeGame(Widget):
         self.apple = Apple(self.canvas)
 
     def on_touch_down(self, touch):
-        window_size = Window.size
-        direction = self.direction
-        if window_size[0] - touch.pos[0] < window_size[0] / 4:
-            direction = "right"
-        elif touch.pos[0] < (window_size[0] / 4):
-            direction = "left"
-        elif window_size[1] - touch.pos[1] < window_size[1] / 4:
-            direction = "up"
-        elif touch.pos[1] < (window_size[1] / 4):
-            direction = "down"
+        head_x = self.snake.pos[0]
+        head_y = self.snake.pos[1]
 
-        if self.opposite_dirs[direction] != self.direction:
-            self.direction = direction
+        if self.direction in [UP, DOWN]:
+            if touch.pos[0] > head_x:
+                self.direction = RIGHT
+            else:
+                self.direction = LEFT
+        else:
+            if touch.pos[1] < head_y:
+                self.direction = DOWN
+            else:
+                self.direction = UP
 
         return super(SnakeGame, self).on_touch_down(touch)
 
