@@ -1,10 +1,12 @@
+import random
+
 from kivy import properties as props
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.graphics import Color, Ellipse
-from kivy.uix.widget import Widget
+from kivy.graphics import Color, Ellipse, Rectangle
 from kivy.uix.label import Label
+from kivy.uix.widget import Widget
 
 SPEED = 0.1
 SIZE = 30
@@ -22,7 +24,7 @@ class Snake(Widget):
     def __init__(self, canvas):
         super().__init__()
         self.canvas = canvas
-        for _ in range(60):
+        for _ in range(4):
             self._grow([300, 300])
 
     @property
@@ -49,6 +51,33 @@ class Snake(Widget):
             self._grow(next_pos)
 
 
+class Apple(Widget):
+    coord = props.ListProperty([350, 350])
+    body = props.ObjectProperty(None)
+
+    def __init__(self, canvas):
+        super().__init__()
+        self.canvas = canvas
+        with self.canvas:
+            Color(1, 0, 0)
+            self.body = Ellipse(pos=self.coord, size=(SIZE, SIZE))
+
+    def check_collision(self, coord):
+        pass
+
+    def new_position(self, snake):
+        while True:
+            apple_x = random.randint(SIZE, Window.size[0] - size)
+            apple_y = random.randint(SIZE, Window.size[1] - size)
+
+            for segment in snake.body:
+                if [apple_x, apple_y] == segment.pos:
+                    continue
+
+            self.coord = [apple_x, apple_y]
+            return
+
+
 class SnakeGame(Widget):
     opposite_dirs = {
         RIGHT: LEFT,
@@ -66,9 +95,9 @@ class SnakeGame(Widget):
 
     def __init__(self):
         super().__init__()
-
         self.canvas.clear()
         self.snake = Snake(self.canvas)
+        self.apple = Apple(self.canvas)
 
     def on_touch_down(self, touch):
         window_size = Window.size
@@ -99,14 +128,11 @@ class SnakeGame(Widget):
             position[1] = window_size[1]
         elif position[1] + SIZE > window_size[1]:
             position[1] = 0
-        
+
     def final_screen(self):
         Clock.unschedule(self.update)
         self.canvas.clear()
-        l = Label(
-            font_size=20,
-            pos=(300, 300),
-            text="Game Over!")
+        l = Label(font_size=20, pos=(300, 300), text="Game Over!")
 
         self.add_widget(l)
 
@@ -118,6 +144,7 @@ class SnakeGame(Widget):
         stop_game = self.snake.check_self_collision(snake_pos)
         if stop_game:
             self.final_screen()
+            return
 
         self.snake.move_to(snake_pos)
 
