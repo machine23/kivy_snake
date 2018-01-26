@@ -28,7 +28,7 @@ class Snake(Widget):
             self._grow([300, 300])
 
     @property
-    def pos(self):
+    def head_position(self):
         return self.body[0].pos
 
     def _grow(self, pos):
@@ -52,7 +52,7 @@ class Snake(Widget):
 
 
 class Apple(Widget):
-    coord = props.ListProperty([350, 350])
+    coord = props.ListProperty([250, 300])
     body = props.ObjectProperty(None)
 
     def __init__(self, canvas):
@@ -63,18 +63,28 @@ class Apple(Widget):
             self.body = Ellipse(pos=self.coord, size=(SIZE, SIZE))
 
     def check_collision(self, coord):
-        pass
+        print(self.coord, coord)
+        if coord[0] <= self.coord[0] + SIZE/2 <= coord[0] + SIZE \
+            and coord[1] <= self.coord[1] + SIZE/2 <= coord[1] + SIZE:
+            print("check_collision")
+            return True
+        return False
 
     def new_position(self, snake):
+        print("new_position")
         while True:
-            apple_x = random.randint(SIZE, Window.size[0] - size)
-            apple_y = random.randint(SIZE, Window.size[1] - size)
+            apple_x = random.randint(SIZE, Window.size[0] - SIZE)
+            apple_y = random.randint(SIZE, Window.size[1] - SIZE)
+
+            apple_x -= apple_x % SIZE
+            apple_y -= apple_y % SIZE
 
             for segment in snake.body:
                 if [apple_x, apple_y] == segment.pos:
                     continue
 
             self.coord = [apple_x, apple_y]
+            self.body.pos = [apple_x, apple_y]
             return
 
 
@@ -94,8 +104,8 @@ class SnakeGame(Widget):
         self.apple = Apple(self.canvas)
 
     def on_touch_down(self, touch):
-        head_x = self.snake.pos[0]
-        head_y = self.snake.pos[1]
+        head_x = self.snake.head_position[0]
+        head_y = self.snake.head_position[1]
 
         if self.direction in [UP, DOWN]:
             if touch.pos[0] > head_x:
@@ -132,7 +142,7 @@ class SnakeGame(Widget):
 
     def update(self, dt):
         snake_pos = [
-            sum(x) for x in zip(self.snake.pos, self.movs[self.direction])
+            sum(x) for x in zip(self.snake.head_position, self.movs[self.direction])
         ]
         self.check_edges(snake_pos)
         stop_game = self.snake.check_self_collision(snake_pos)
@@ -140,7 +150,12 @@ class SnakeGame(Widget):
             self.final_screen()
             return
 
-        self.snake.move_to(snake_pos)
+        get_apple = self.apple.check_collision(self.snake.head_position)
+
+        if get_apple:
+            self.apple.new_position(self.snake)
+
+        self.snake.move_to(snake_pos, get_apple)
 
 
 class SnakeApp(App):
